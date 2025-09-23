@@ -1,67 +1,41 @@
-version: "3.9"
+version: '3.8'
 
 services:
   ollama:
-    image: docker.io/eduardolucasmaia/ollama:latest
+    image: ollama/ollama
+    container_name: ollama
     volumes:
       - ollama_data:/root/.ollama
     ports:
-      - target: 11434
-        published: 11434
-        protocol: tcp
-        mode: ingress
-    networks:
-      - ollama_net
+      - "11434:11434"
+    # Uncomment the following lines to enable GPU acceleration
     deploy:
-      replicas: 2
-      placement:
-        constraints:
-          - node.labels.gpu == true
       resources:
         reservations:
-          generic_resources:
-            - discrete_resource_spec:
-                kind: "NVIDIA-GPU"
-                value: 1
-      restart_policy:
-        condition: any
-      update_config:
-        order: start-first
-        parallelism: 1
-        delay: 5s
-      rollback_config:
-        order: start-first
-        parallelism: 1
-        delay: 5s
-      # Ver seção "GPU no Swarm" para reservar GPU
-
-  open-webui:
-    image: docker.io/eduardolucasmaia/openwebui:latest
-    depends_on:
-      - ollama
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-    volumes:
-      - open_webui_data:/app/backend/data
-    ports:
-      - target: 8081
-        published: 8081
-        protocol: tcp
-        mode: ingress
+          devices:
+            - driver: nvidia
+              count: 1 # Or 'all'
+              capabilities: [gpu]
     networks:
       - ollama_net
-    deploy:
-      replicas: 2
-      restart_policy:
-        condition: any
-      update_config:
-        order: start-first
-        parallelism: 1
-        delay: 5s
-      rollback_config:
-        order: start-first
-        parallelism: 1
-        delay: 5s
+    restart: unless-stopped
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    depends_on:
+      - ollama
+    ports:
+      - "8081:8081"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      # Optional: Add WebUI specific configurations here if needed
+      # Example: WEBUI_SECRET_KEY=your_secret_key
+    volumes:
+      - open_webui_data:/app/backend/data
+    networks:
+      - ollama_net
+    restart: unless-stopped
 
 volumes:
   ollama_data:
@@ -69,69 +43,10 @@ volumes:
 
 networks:
   ollama_net:
-    driver: overlay
+    driver: bridge
 
-
-
-
-
-
-#Docker Compose - Local Development
-
-# version: '3.8'
-
-# services:
-#   ollama:
-#     image: ollama/ollama
-#     container_name: ollama
-#     volumes:
-#       - ollama_data:/root/.ollama
-#     ports:
-#       - "11434:11434"
-#     # Uncomment the following lines to enable GPU acceleration
-#     deploy:
-#       resources:
-#         reservations:
-#           devices:
-#             - driver: nvidia
-#               count: 1 # Or 'all'
-#               capabilities: [gpu]
-#     networks:
-#       - ollama_net
-#     restart: unless-stopped
-
-#   open-webui:
-#     image: ghcr.io/open-webui/open-webui:main
-#     container_name: open-webui
-#     depends_on:
-#       - ollama
-#     ports:
-#       - "8080:8080"
-#     environment:
-#       - OLLAMA_BASE_URL=http://ollama:11434
-#       # Optional: Add WebUI specific configurations here if needed
-#       # Example: WEBUI_SECRET_KEY=your_secret_key
-#     volumes:
-#       - open_webui_data:/app/backend/data
-#     networks:
-#       - ollama_net
-#     restart: unless-stopped
-
-# volumes:
-#   ollama_data:
-#   open_webui_data:
-
-# networks:
-#   ollama_net:
-#     driver: bridge
-
-
-
-
-
-
-# # After starting with 'docker-compose up -d', access Open WebUI at http://localhost:8080
-# # You can then pull the deepseek-r1 model through the WebUI or by running:
-# # docker exec -it ollama bash
-# # ollama pull deepseek-r1
+# After starting with 'docker-compose up -d', access Open WebUI at http://localhost:8080
+# You can then pull the deepseek-r1 model through the WebUI or by running:
+# docker exec -it ollama bash
+# ollama pull deepseek-r1
 

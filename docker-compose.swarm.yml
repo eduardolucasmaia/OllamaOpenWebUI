@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  ollama:
+    image: docker.io/eduardolucasmaia/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - target: 11434
+        published: 11434
+        protocol: tcp
+        mode: ingress
+    networks:
+      - ollama_net
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      resources:
+        reservations:
+          generic_resources:
+            - discrete_resource_spec:
+                kind: "NVIDIA-GPU"
+                value: 1
+      restart_policy:
+        condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+      rollback_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+      # Ver seção "GPU no Swarm" para reservar GPU
+
+  open-webui:
+    image: docker.io/eduardolucasmaia/openwebui:latest
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - open_webui_data:/app/backend/data
+    ports:
+      - target: 8081
+        published: 8081
+        protocol: tcp
+        mode: ingress
+    networks:
+      - ollama_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+      rollback_config:
+        order: start-first
+        parallelism: 1
+        delay: 5s
+
+volumes:
+  ollama_data:
+  open_webui_data:
+
+networks:
+  ollama_net:
+    driver: overlay

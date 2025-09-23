@@ -14,11 +14,12 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: Build Docker image
-        run: docker build -t eduardolucasmaia/ollamaopenwebui:latest .
+        run: |
+          docker build ./ollama/ -t eduardolucasmaia/ollama:latest
+          docker build ./open-webui/ -t eduardolucasmaia/openwebui:latest
       - name: Push Docker image to Docker Hub
         run: |
           echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u eduardolucasmaia --password-stdin
-          docker push eduardolucasmaia/ollamaopenwebui:latest
+          docker push eduardolucasmaia/ollama:latest
+          docker push eduardolucasmaia/openwebui:latest
           docker logout
-
-# docker login -u eduardolucasmaia -p ${{ secrets.DOCKER_HUB_TOKEN }}

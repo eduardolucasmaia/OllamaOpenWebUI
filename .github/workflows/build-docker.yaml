@@ -1,0 +1,24 @@
+name: Build and Publish image to Docker Hub
+
+on:
+  push:
+    branches:
+      - main
+#    paths:
+#      - 'dockerfile'
+
+jobs:
+  publish_images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t eduardolucasmaia/ollamaopenwebui:latest .
+      - name: Push Docker image to Docker Hub
+        run: |
+          echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u eduardolucasmaia --password-stdin
+          docker push eduardolucasmaia/ollamaopenwebui:latest
+          docker logout
+
+# docker login -u eduardolucasmaia -p ${{ secrets.DOCKER_HUB_TOKEN }}

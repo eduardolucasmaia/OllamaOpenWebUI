@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   ollama:
-    image: ollama/ollama:latest
+    image: docker.io/eduardolucasmaia/ollama:latest
     volumes:
       - ollama_data:/root/.ollama
     ports:
@@ -36,7 +36,7 @@ services:
       # Ver seção "GPU no Swarm" para reservar GPU
 
   open-webui:
-    image: ghcr.io/open-webui/open-webui:main
+    image: docker.io/eduardolucasmaia/openwebui:latest
     depends_on:
       - ollama
     environment:

@@ -38,19 +38,22 @@ services:
 
   open-webui:
     image: docker.io/eduardolucasmaia/openwebui:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.open-webui.rule=PathPrefix(/open-webui)"
+      - "traefik.http.routers.open-webui.entrypoints=web"
+      - "traefik.http.services.open-webui.loadbalancer.server.port=8081"
+      - "traefik.http.middlewares.owui-strip.stripprefix.prefixes=/openwebui"
+      - "traefik.http.routers.open-webui.middlewares=owui-strip"
+      # - "traefik.http.routers.open-webui.rule=Host(192.168.1.100)"
     depends_on:
       - ollama
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
-      - PORT=8081
     volumes:
       - open_webui_data:/app/backend/data
-    ports:
-      - "8081:8081"
-      # - target: 8081
-      #   published: 8081
-      #   protocol: tcp
-      #   mode: ingress
+    # ports:
+      # - "8081:8081"
     networks:
       - ollama_net
     deploy:
